@@ -7,7 +7,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
-import com.maxdgf.impulse.data.MediaPlayerService
+import com.maxdgf.impulse.exoplayer.MediaPlayerService
 import com.maxdgf.impulse.domain.repository.MediaControllerRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow

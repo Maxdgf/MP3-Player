@@ -31,7 +31,7 @@
         </activity>
 
         <service
-            android:name=".data.MediaPlayerService"
+            android:name=".exoplayer.MediaPlayerService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false">
             <intent-filter>

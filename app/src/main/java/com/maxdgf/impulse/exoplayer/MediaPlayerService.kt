@@ -1,4 +1,4 @@
-package com.maxdgf.impulse.data
+package com.maxdgf.impulse.exoplayer
 
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
