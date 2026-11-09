@@ -1,9 +1,13 @@
 package com.maxdgf.impulse.data.impl
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
+import androidx.core.content.ContextCompat
 import androidx.core.database.getStringOrNull
 import androidx.core.net.toUri
 import com.maxdgf.impulse.domain.model.Audio
@@ -24,6 +28,13 @@ class AudioRepositoryImpl @Inject constructor(@param:ApplicationContext private 
     private val _contentResolver = context.contentResolver
 
     private fun getAllMusicFromStorage(): List<Audio> {
+        val neededPermission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.READ_MEDIA_AUDIO
+            else Manifest.permission.READ_EXTERNAL_STORAGE
+
+        if (ContextCompat.checkSelfPermission(context, neededPermission) != PackageManager.PERMISSION_GRANTED)
+            throw Exception("Permission for reading media storage not granted")
+
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.DISPLAY_NAME,
