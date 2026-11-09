@@ -76,15 +76,27 @@ class MediaControllerRepositoryImpl @Inject constructor(@param:ApplicationContex
     }
 
     override fun updateMediaItems(items: List<MediaItem>) {
-        if (items.hashCode() != _lastMediaItemsListHash) {
+        val itemsHash = items.fold(1) { acc, item -> acc * 31 + item.mediaId.hashCode() }
+        if (itemsHash != _lastMediaItemsListHash) _mediaController?.let { controller ->
             _mediaItemsIndicesMap = items
                 .mapIndexed { index, item ->
                     return@mapIndexed item.mediaId to index
                 }
                 .toMap()
 
-            _mediaController?.setMediaItems(items)
-            _lastMediaItemsListHash = items.hashCode()
+            val currentMediaItemId = controller.currentMediaItem?.mediaId
+            if (currentMediaItemId != null) {
+                val isPlaying = controller.isPlaying
+                val positionMs = controller.currentPosition
+                val newCurrentMediaItemIndex = items.indexOfFirst { it.mediaId == currentMediaItemId }
+
+                if (newCurrentMediaItemIndex >= 0) controller.apply {
+                    setMediaItems(items, newCurrentMediaItemIndex, positionMs)
+                    if (isPlaying) play()
+                } else controller.setMediaItems(items)
+            } else controller.setMediaItems(items)
+
+            _lastMediaItemsListHash = itemsHash
         }
     }
 
