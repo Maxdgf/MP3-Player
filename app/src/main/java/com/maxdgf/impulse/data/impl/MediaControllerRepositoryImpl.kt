@@ -77,24 +77,41 @@ class MediaControllerRepositoryImpl @Inject constructor(@param:ApplicationContex
 
     override fun updateMediaItems(items: List<MediaItem>) {
         val itemsHash = items.fold(1) { acc, item -> acc * 31 + item.mediaId.hashCode() }
+
         if (itemsHash != _lastMediaItemsListHash) _mediaController?.let { controller ->
+            val currentMediaItemId = controller.currentMediaItem?.mediaId // current media item's id
+
+            // index of current media item in new list
+            val newCurrentMediaItemIndex =
+                currentMediaItemId?.let { id -> items.indexOfFirst { it.mediaId == id } } ?: -1
+
+            if (newCurrentMediaItemIndex >= 0) controller.run {
+                // update left side until current media item
+                removeMediaItems(0, currentMediaItemIndex) // remove existing items
+                addMediaItems(0, items.subList(0, newCurrentMediaItemIndex)) // add new items
+
+                // update right side before current media item
+                val moveIndexTo1: (Int, Int) -> Int = { index, size -> if (index < size - 1) index + 1 else size - 1 }
+                removeMediaItems(moveIndexTo1(currentMediaItemIndex, mediaItemCount), mediaItemCount) // remove existing items
+                addMediaItems(items.subList(moveIndexTo1(newCurrentMediaItemIndex, items.size), items.size)) // add new items
+
+                // replace current media item with a new one if it has been updated
+                if (currentMediaItem != items[newCurrentMediaItemIndex]) {
+                    val isPlaying = isPlaying // save playback state
+                    val positionMs = currentPosition // save current position in ms
+
+                    replaceMediaItem(currentMediaItemIndex, items[newCurrentMediaItemIndex]) // replace
+
+                    seekTo(positionMs) // seek to last position
+                    if (isPlaying) play() // start playback
+                }
+            } else controller.setMediaItems(items) // set media items if current media item not selected
+
             _mediaItemsIndicesMap = items
                 .mapIndexed { index, item ->
                     return@mapIndexed item.mediaId to index
                 }
                 .toMap()
-
-            val currentMediaItemId = controller.currentMediaItem?.mediaId
-            if (currentMediaItemId != null) {
-                val isPlaying = controller.isPlaying
-                val positionMs = controller.currentPosition
-                val newCurrentMediaItemIndex = items.indexOfFirst { it.mediaId == currentMediaItemId }
-
-                if (newCurrentMediaItemIndex >= 0) controller.apply {
-                    setMediaItems(items, newCurrentMediaItemIndex, positionMs)
-                    if (isPlaying) play()
-                } else controller.setMediaItems(items)
-            } else controller.setMediaItems(items)
 
             _lastMediaItemsListHash = itemsHash
         }
